@@ -34,6 +34,8 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
 .item h3{margin:0;font-size:17px;font-weight:700;overflow-wrap:anywhere}
 .meta{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:4px;font-size:14px;color:var(--mute)}
 .badge{color:var(--sc,var(--c));font-weight:700}
+.plus{margin-left:auto;border:1px solid var(--sc,var(--c));background:transparent;color:var(--sc,var(--c));font:inherit;font-weight:700;font-size:14px;border-radius:999px;padding:3px 12px;cursor:pointer}
+.plus:active{transform:scale(.94)}
 .chip{padding:1px 10px;border-radius:999px;font-weight:900;font-size:13px}
 .item.tg{background:color-mix(in srgb,var(--c) 10%,var(--card))}
 .bar{height:5px;border-radius:3px;background:var(--line);margin-top:8px;overflow:hidden}
@@ -131,7 +133,7 @@ function render(){
   $("list").innerHTML=items.map(function(a){
     var pct=(a.s==="emision"||a.s==="proxima")?100:a.n>0?Math.min(100,Math.round(a.w/a.n*100)):(a.s==="completado"?100:0);
     return '<div class="item'+(TG[a.g]?' tg':'')+'" data-id="'+a.id+'" style="--c:'+(TG[a.g]?TG[a.g][1]:ST[a.s][1])+';--sc:'+ST[a.s][1]+'"><h3>'+esc(a.t)+'</h3><div class="meta">'+(TG[a.g]?'<span class="chip" style="background:'+TG[a.g][1]+';color:'+TG[a.g][2]+'">'+TG[a.g][0]+'</span>':'')+'<span class="badge">'+ST[a.s][0]+'</span>'
-      +(a.n||a.w?'<span>'+a.w+(a.n?'/'+a.n:'')+' eps</span>':'')+(a.r>0?'<span>★ '+a.r+'</span>':'')+(a.rw>0?'<span>↻ '+a.rw+(a.rw===1?' vez':' veces')+'</span>':'')+'</div>'
+      +(a.n||a.w?'<span>'+a.w+(a.n?'/'+a.n:'')+' eps</span>':'')+(a.r>0?'<span>★ '+a.r+'</span>':'')+(a.rw>0?'<span>↻ '+a.rw+(a.rw===1?' vez':' veces')+'</span>':'')+((a.s==="viendo"||a.s==="emision")?'<button class="plus" data-plus="'+a.id+'">+1 ep</button>':'')+'</div>'
       +(a.o?'<div class="meta">'+esc(a.o.slice(0,90))+(a.o.length>90?'...':'')+'</div>':'')
       +'<div class="bar"><i style="width:'+pct+'%"></i></div>'+(a.s==="pendiente"?'<button class="btn" data-start="'+a.id+'" style="margin-top:10px;width:100%">Empezar a verlo</button>':'')+'</div>'}).join("");
 }
@@ -144,6 +146,11 @@ function openSheet(id){
   if(!id)setTimeout(function(){$("f-t").focus()},50);
 }
 function closeSheet(){$("bg").classList.remove("open")}
+function plusEp(id){var x=data.find(function(d){return d.id===id});if(!x)return;
+  x.w=(x.w||0)+1;
+  if(x.s==="emision")x.n=x.n>0?x.n+1:x.w;
+  else if(x.n&&x.w>=x.n){x.w=x.n;x.s="completado";x.u=Date.now();save();render();openSheet(id);return}
+  x.u=Date.now();save();render()}
 function num(v){var n=parseFloat(v);return isNaN(n)||n<0?0:n}
 
 $("sv").onclick=function(){
@@ -169,6 +176,7 @@ $("qb").onclick=function(){
   $("qa").value="";save();render();
 };
 $("list").onclick=function(e){
+  var pid=e.target.getAttribute("data-plus");if(pid){plusEp(pid);return}
   var sid=e.target.getAttribute("data-start");
   if(sid){var a=data.find(function(x){return x.id===sid});if(a){a.s="viendo";a.u=Date.now();save();render()}return}
   var c=e.target.closest(".item");if(c)openSheet(c.getAttribute("data-id"))};
